@@ -128,12 +128,12 @@ export function LintSidebar({
             border: "1px solid rgba(26,22,18,0.06)",
             color: "#4A413A",
           }}>
-            <div className="font-bold mb-1.5" style={{ color: "#1A1612" }}>No lints — looking good</div>
-            <div className="leading-relaxed">
-              Beacon found {dataCounts.brands} tracked brand{dataCounts.brands === 1 ? "" : "s"},
-              {" "}{dataCounts.topics} topic{dataCounts.topics === 1 ? "" : "s"}, and
-              {" "}{dataCounts.urlRows} cited URL{dataCounts.urlRows === 1 ? "" : "s"}.
-              Either coverage is too thin yet, or this draft is well-anchored.
+            <div className="font-bold mb-1.5" style={{ color: "#1A1612" }}>Sidebar is quiet</div>
+            <div className="leading-relaxed" style={{ fontFamily: '"New York", Georgia, serif' }}>
+              Select a Peec project, then paste your draft or start writing — yappr surfaces real citations against your own product.
+            </div>
+            <div className="leading-relaxed mt-2 text-[11px]" style={{ color: "#8E8478" }}>
+              Project context: {dataCounts.brands} brand{dataCounts.brands === 1 ? "" : "s"} · {dataCounts.topics} topic{dataCounts.topics === 1 ? "" : "s"} · {dataCounts.urlRows} cited URL{dataCounts.urlRows === 1 ? "" : "s"}.
             </div>
           </div>
         )}
@@ -187,7 +187,7 @@ export function LintSidebar({
                   {lint.evidence?.notes && lint.evidence.notes.length > 0 && (
                     <div className="mb-2">
                       <div className="text-[9px] font-extrabold uppercase tracking-[0.22em] mb-1" style={{ color: "#8E8478" }}>
-                        How Beacon found this
+                        How yappr found this
                       </div>
                       <ul className="text-[12px] leading-snug pl-3 list-disc" style={{ color: "#4A413A" }}>
                         {lint.evidence.notes.map((n, i) => <li key={i}>{n}</li>)}
@@ -275,13 +275,23 @@ export function LintSidebar({
                     <div className="text-[9px] font-bold uppercase tracking-[0.16em] mb-0.5" style={{ color: "#2F8466" }}>
                       Now
                     </div>
-                    <div className="text-[13px] font-medium leading-snug" style={{
-                      color: "#1A1612",
-                      fontFamily: preview.target === "add-schema-block" ? "ui-monospace, monospace" : '"New York", Georgia, serif',
-                      whiteSpace: preview.target === "add-schema-block" ? "pre-wrap" : "normal",
-                    }}>
-                      {preview.newHtml.slice(0, 400)}{preview.newHtml.length > 400 ? "…" : ""}
-                    </div>
+                    {preview.target === "add-schema-block" ? (
+                      <pre className="text-[12px] leading-snug rounded-[8px] p-2.5 max-h-[280px] overflow-auto beacon-sidebar-scroll" style={{
+                        background: "rgba(26,22,18,0.04)",
+                        color: "#1A1612",
+                        fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, monospace",
+                        whiteSpace: "pre-wrap",
+                        wordBreak: "break-word",
+                        margin: 0,
+                      }}>{prettyJson(preview.newHtml)}</pre>
+                    ) : (
+                      <div className="text-[13px] font-medium leading-snug" style={{
+                        color: "#1A1612",
+                        fontFamily: '"New York", Georgia, serif',
+                      }}>
+                        {preview.newHtml.length > 400 ? preview.newHtml.slice(0, 400) + "…" : preview.newHtml}
+                      </div>
+                    )}
                   </div>
                   <p className="text-[11px] italic mb-2" style={{ color: "#4A413A" }}>{preview.rationale}</p>
                   <div className="flex gap-2">
@@ -353,6 +363,11 @@ export function LintSidebar({
       </div>
     </aside>
   );
+}
+
+function prettyJson(s: string): string {
+  try { return JSON.stringify(JSON.parse(s), null, 2); }
+  catch { return s; }
 }
 
 function LintIcon({ kind, color }: { kind: Lint["kind"]; color: string }) {

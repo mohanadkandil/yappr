@@ -2,7 +2,7 @@
  * Peec REST client.
  *
  * Why REST and not MCP: Peec's MCP uses an OAuth redirect flow that only works
- * for interactive clients (Claude Desktop, Cursor, VS Code). Beacon Studio is a
+ * for interactive clients (Claude Desktop, Cursor, VS Code). yappr Studio is a
  * server-rendered Next.js app that needs to call Peec from the server with a
  * pre-issued API key. The REST API exposes the same data with X-API-Key auth.
  *

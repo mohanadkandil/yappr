@@ -84,7 +84,7 @@ export function computeProjectLints(input: ProjectLintInputs): Lint[] {
       cite: "PEEC · LIST_BRANDS",
       quote: "Mark one of your tracked brands as `is_own=true` in Peec to unlock topic-loss and citation-gap lints.",
       evidence: {
-        notes: ["Beacon checked your brand list and found no brand marked as own.", "Once is_own is set, citation-gap lints unlock automatically."],
+        notes: ["yappr checked your brand list and found no brand marked as own.", "Once is_own is set, citation-gap lints unlock automatically."],
         competitors: brands.map((b) => b.name).filter(Boolean),
       },
     });
@@ -245,7 +245,7 @@ export function computeDocLints(input: DocLintInputs): Lint[] {
           jtbdTerms: [...jtbdPool].slice(0, 12),
           citedTitles: titlesPool.slice(0, 6),
           notes: [
-            `Beacon analyzed ${titlesPool.length} top cited URL titles from Peec.`,
+            `yappr analyzed ${titlesPool.length} top cited URL titles from Peec.`,
             `Extracted ${jtbdPool.size} candidate JTBD bigrams/trigrams.`,
             `Your H1 contains 0 of them — AI engines look for these phrases when extracting.`,
           ],
@@ -336,7 +336,7 @@ export function computeDocLints(input: DocLintInputs): Lint[] {
         evidence: {
           competitors: knownNames,
           notes: [
-            `Beacon found ${knownNames.length} tracked competitors in your Peec project.`,
+            `yappr found ${knownNames.length} tracked competitors in your Peec project.`,
             `Your draft mentions 0 of them by name despite using a comparison pattern.`,
             `AI engines weight comparison content by the explicit competitor names it contains.`,
           ],
@@ -368,6 +368,17 @@ export function computeDocLints(input: DocLintInputs): Lint[] {
 // =============================================================================
 
 export function computeAllLints(args: { project: ProjectLintInputs; doc?: DocFacts }): Lint[] {
+  // An empty editor shouldn't surface stale lints. If the user has cleared
+  // the draft, zero out the sidebar so it reads as a blank slate. The
+  // project-wide intel is still accessible via Wire — Quill's lint sidebar
+  // is only relevant when there's something to lint.
+  if (args.doc) {
+    const empty =
+      (args.doc.bodyText ?? "").trim().length === 0 &&
+      (args.doc.h1 ?? "").trim().length === 0 &&
+      (args.doc.h2s ?? []).length === 0;
+    if (empty) return [];
+  }
   const project = computeProjectLints(args.project);
   if (!args.doc) return project;
   const competitorNames = args.project.brands

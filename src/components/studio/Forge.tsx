@@ -38,7 +38,7 @@ export function Forge({
       <div className="max-w-[820px] mx-auto px-12 py-14">
         {/* Hero */}
         <div className="text-[11px] font-bold uppercase tracking-[0.26em] mb-3" style={{ color: "#B5601E" }}>
-          BEACON · FORGE
+          YAPPR · FORGE
         </div>
         <h1 className="font-extrabold leading-[1.04] tracking-[-0.03em] mb-4 text-[#1A1612]"
             style={{ fontSize: 56, fontFamily: '-apple-system, "SF Pro Display", system-ui' }}>
@@ -50,7 +50,7 @@ export function Forge({
           fontFamily: '"New York", "Iowan Old Style", Georgia, serif',
           color: "#4A413A",
         }}>
-          Pick a topic. Forge pulls top cited URLs and tracked competitors from <strong>{projectName}</strong>'s Peec project, then drafts an article anchored in the JTBD terms AI engines actually quote. Open the result in Quill to refine and ship.
+          Pick a topic. Forge pulls top cited URLs and tracked competitors from <strong>{projectName}</strong>&apos;s Peec project, then drafts an article anchored in the JTBD terms AI engines actually quote. Open the result in Quill to refine and ship.
         </p>
 
         {/* Form */}
@@ -68,7 +68,7 @@ export function Forge({
               type="text"
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
-              placeholder="e.g. prism vs Juicebox for high-volume sourcing"
+              placeholder="e.g. your product vs top competitors"
               className="w-full text-[20px] font-medium px-0 py-2 border-0 outline-none bg-transparent"
               style={{
                 fontFamily: '"New York", "Iowan Old Style", Georgia, serif',

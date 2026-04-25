@@ -28,8 +28,12 @@ export function ForgePanel({
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  // Reset result when panel opens fresh
-  useEffect(() => { if (open) setResult(null); }, [open]);
+  // Reset result when panel opens fresh.
+  useEffect(() => {
+    if (!open) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setResult(null);
+  }, [open]);
 
   const generate = async () => {
     if (!topic.trim()) return;
@@ -88,7 +92,7 @@ export function ForgePanel({
               FORGE · NEW DRAFT
             </div>
             <div className="font-extrabold text-[18px] tracking-tight mt-1" style={{ color: "#1A1612" }}>
-              Generate from {projectName}'s Peec data
+              Generate from {projectName}&apos;s Peec data
             </div>
           </div>
           <button onClick={onClose} className="px-2.5 py-1 rounded-full text-[11px] font-bold border" style={{
@@ -115,7 +119,7 @@ export function ForgePanel({
               </div>
               <input
                 type="text" value={topic} onChange={(e) => setTopic(e.target.value)}
-                placeholder="e.g. prism vs Juicebox for high-volume sourcing"
+                placeholder="e.g. your product vs top competitors"
                 className="w-full text-[18px] font-medium px-0 py-2 border-0 outline-none bg-transparent"
                 style={{
                   fontFamily: '"New York", Georgia, serif',

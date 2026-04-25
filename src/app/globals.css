@@ -129,7 +129,7 @@
   }
 }
 
-/* ---- Beacon editor styles live in src/components/studio/editor.css ----
+/* ---- yappr editor styles live in src/components/studio/editor.css ----
    Do NOT add editor styles here. The editor.css file is co-located with the
    Editor.tsx component and imported by it directly so Tailwind 4's @layer
    base preflight cannot interfere with editor headings/paragraphs. */
@@ -226,4 +226,148 @@
 @keyframes beacon-fade-in-up {
   0%   { opacity: 0; transform: translateY(8px); }
   100% { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   Lighthouse character animations
+   ============================================================ */
+
+/* Sweep the light cone slowly side-to-side, like a real lighthouse */
+.beacon-light-sweep {
+  transform-origin: 50% 0%;
+  animation: beacon-sweep 9s ease-in-out infinite;
+}
+@keyframes beacon-sweep {
+  0%, 100% { transform: rotate(-9deg); opacity: 0.55; }
+  50%      { transform: rotate(9deg);  opacity: 0.80; }
+}
+
+/* Lamp pulses subtly (the "breathing" glow) */
+.beacon-lamp {
+  animation: beacon-lamp-breathe 3.6s ease-in-out infinite;
+  transform-origin: center;
+}
+@keyframes beacon-lamp-breathe {
+  0%, 100% { filter: drop-shadow(0 0 6px #F4D265); transform: scale(1); }
+  50%      { filter: drop-shadow(0 0 16px #F4D265); transform: scale(1.08); }
+}
+
+/* Tower bobs gently like a poster floating */
+.beacon-tower {
+  animation: beacon-tower-bob 7s ease-in-out infinite;
+}
+@keyframes beacon-tower-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+
+/* Waves drift to give a feeling of motion */
+.beacon-waves-1 { animation: beacon-wave-shift 11s ease-in-out infinite; }
+.beacon-waves-2 { animation: beacon-wave-shift 14s ease-in-out infinite reverse; }
+@keyframes beacon-wave-shift {
+  0%, 100% { transform: translateX(0); }
+  50%      { transform: translateX(8px); }
+}
+
+/* Keeper character — small wave when hovered */
+.beacon-keeper-arm {
+  transform-origin: 12px 12px;
+  animation: beacon-keeper-wave 4s ease-in-out infinite;
+}
+@keyframes beacon-keeper-wave {
+  0%, 100% { transform: rotate(0deg); }
+  10%, 30% { transform: rotate(-18deg); }
+  20%      { transform: rotate(-25deg); }
+  40%      { transform: rotate(0deg); }
+}
+
+/* Stars / dots in sky to add depth */
+.beacon-star {
+  animation: beacon-star-twinkle 4s ease-in-out infinite;
+}
+.beacon-star.s2 { animation-delay: 1.4s; }
+.beacon-star.s3 { animation-delay: 2.8s; }
+@keyframes beacon-star-twinkle {
+  0%, 100% { opacity: 0.3; }
+  50%      { opacity: 0.9; }
+}
+
+/* Feature card hover lift */
+.beacon-feature-card {
+  transition: transform 240ms cubic-bezier(0.2, 0.7, 0.3, 1.2), box-shadow 240ms ease;
+}
+.beacon-feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 28px 60px rgba(26,22,18,0.10), 0 8px 16px rgba(26,22,18,0.06);
+}
+
+@keyframes beacon-pulse-tiny {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.4); opacity: 0.7; }
+}
+
+/* ============================================================
+   Landing — feature spread animations
+   ============================================================ */
+
+/* Quill stroke — animates the underline marks */
+@keyframes beacon-quill-mark-1 { 0%, 100% { stroke-dashoffset: 100; } 25%, 60% { stroke-dashoffset: 0; } }
+@keyframes beacon-quill-mark-2 { 0%, 100% { stroke-dashoffset: 100; } 38%, 75% { stroke-dashoffset: 0; } }
+@keyframes beacon-quill-mark-3 { 0%, 100% { stroke-dashoffset: 100; } 52%, 90% { stroke-dashoffset: 0; } }
+
+.beacon-quill-mark {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+}
+.beacon-quill-mark-1 { animation: beacon-quill-mark-1 7s ease-in-out infinite; }
+.beacon-quill-mark-2 { animation: beacon-quill-mark-2 7s ease-in-out infinite; }
+.beacon-quill-mark-3 { animation: beacon-quill-mark-3 7s ease-in-out infinite; }
+
+/* Forge sparks — rise and fade */
+@keyframes beacon-spark-rise {
+  0%   { transform: translate(0, 0) scale(0.4); opacity: 0; }
+  20%  { opacity: 1; }
+  100% { transform: translate(var(--dx, 0px), -60px) scale(0.2); opacity: 0; }
+}
+.beacon-spark { animation: beacon-spark-rise 2.6s ease-out infinite; }
+
+/* Forge hammer tap */
+@keyframes beacon-hammer {
+  0%, 70%, 100% { transform: rotate(-22deg); }
+  78%           { transform: rotate(-2deg); }
+  82%           { transform: rotate(-22deg); }
+}
+.beacon-hammer { transform-origin: 65% 88%; animation: beacon-hammer 2.6s ease-in-out infinite; }
+
+/* Wire pulse — travels along the path */
+@keyframes beacon-wire-pulse {
+  0%   { stroke-dashoffset: 80; opacity: 0.2; }
+  20%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { stroke-dashoffset: -80; opacity: 0.2; }
+}
+.beacon-wire-pulse {
+  stroke-dasharray: 8 80;
+  animation: beacon-wire-pulse 3.2s linear infinite;
+}
+.beacon-wire-pulse.delay-1 { animation-delay: 0.6s; }
+.beacon-wire-pulse.delay-2 { animation-delay: 1.4s; }
+
+/* Node glow */
+@keyframes beacon-node-glow {
+  0%, 100% { r: 5; }
+  50%      { r: 7; }
+}
+.beacon-wire-node { animation: beacon-node-glow 3s ease-in-out infinite; }
+
+/* Section eyebrow ascender */
+.beacon-act-number {
+  font-family: "New York", "Iowan Old Style", Georgia, serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 88px;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: #B5601E;
+  opacity: 0.55;
 }

@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
       target = "add-schema-block";
       currentSpan = doc.bodyText.slice(0, 600);
       task = `Generate a JSON-LD ${doc.hasFAQPattern ? "FAQPage" : "Article"} schema block based on the content below.`;
-      constraints = `Output valid schema.org JSON only — no <script> tags, no markdown fences. Don't invent facts; if a value is unclear from the content, omit the field.`;
+      constraints = `Output valid JSON.parse-able schema.org JSON only — no <script> tags, no markdown fences, no comments, no trailing commas, no curly quotes (use straight quotes), no ellipses. Required: must be a single JSON object that JSON.parse() accepts.\n\nNon-fabrication is strict. Allowed fields: @context, @type, headline, name, description, mainEntity (FAQ Q+A array). Forbidden unless directly quoted in the content above: author, datePublished, dateModified, publisher, image, url, mainEntityOfPage. If you can't ground a value in the content, OMIT the field entirely. Better to ship a thin valid block than a rich fabricated one.`;
       break;
     case "comparison_structure":
       target = "section";
@@ -87,7 +87,7 @@ Return JSON with two fields:
   const reqBody = {
     model,
     messages: [
-      { role: "system", content: "You are Beacon, a non-fabricating GEO writing assistant. You rewrite spans of content to be quotable by AI search engines. Output only what the schema requests." },
+      { role: "system", content: "You are yappr, a non-fabricating GEO writing assistant. You rewrite spans of content to be quotable by AI search engines. Output only what the schema requests." },
       { role: "user", content: userPrompt },
     ],
     temperature: 0.4,
@@ -116,8 +116,8 @@ Return JSON with two fields:
       headers: {
         "Authorization": `Bearer ${apiKey}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://beacon.so",
-        "X-Title": "Beacon Studio",
+        "HTTP-Referer": "https://yappr.ai",
+        "X-Title": "yappr Studio",
       },
       body: JSON.stringify(reqBody),
     });
@@ -133,10 +133,32 @@ Return JSON with two fields:
     try { parsed = JSON.parse(raw); }
     catch { return NextResponse.json({ ok: false, error: `OpenRouter response wasn't JSON: ${String(raw).slice(0, 200)}` }, { status: 500 }); }
 
+    let validatedHtml = parsed.new_html;
+    if (target === "add-schema-block") {
+      // Strip any accidental script tags or markdown fences first
+      const stripped = validatedHtml
+        .replace(/^```(?:json)?\s*/i, "")
+        .replace(/\s*```$/, "")
+        .replace(/<script[^>]*>/gi, "")
+        .replace(/<\/script>/gi, "")
+        .trim();
+      try {
+        // Re-stringify so the saved value is canonical (kills curly quotes etc)
+        const obj = JSON.parse(stripped);
+        validatedHtml = JSON.stringify(obj, null, 2);
+      } catch (e) {
+        return NextResponse.json({
+          ok: false,
+          error: `Model returned invalid JSON for schema block: ${(e as Error).message}. Try again — the model occasionally outputs trailing commas or curly quotes.`,
+          rawOutput: stripped.slice(0, 400),
+        }, { status: 422 });
+      }
+    }
+
     return NextResponse.json({
       ok: true,
       target,
-      newHtml: parsed.new_html,
+      newHtml: validatedHtml,
       rationale: parsed.rationale,
       model,
     });

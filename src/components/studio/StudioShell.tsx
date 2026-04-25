@@ -2,12 +2,14 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
+import { Logo } from "@/components/Logo";
 import { Toaster, toast } from "sonner";
 import { Editor, type EditorHandle } from "./Editor";
 import { LintSidebar, type FixPreview } from "./LintSidebar";
 import { ProjectSelector } from "./ProjectSelector";
 import { ForgePanel } from "./ForgePanel";
 import { WireShell } from "@/components/wire/WireShell";
+import { SettingsPanel } from "@/components/wire/SettingsPanel";
 import { SAMPLE_DOC } from "./sample-doc";
 import { buildLintTargetMap } from "./lint-targeting";
 import { parseDoc } from "@/lib/parse-doc";
@@ -24,6 +26,12 @@ type FixResp =
 const DEBOUNCE_MS = 800;
 const LS_PROJECT = "beacon.activeProjectId";
 const LS_MODE = "beacon.mode";
+const LS_USER = "beacon.userId";
+
+function generateUserId(): string {
+  const rand = Array.from({ length: 12 }, () => Math.random().toString(36).slice(2, 5)).join("").slice(0, 14);
+  return `beacon_${rand}`;
+}
 
 type Mode = "quill" | "wire";
 
@@ -34,6 +42,10 @@ export function StudioShell({ projectName: initialProjectName, projectId: initia
   projectId: string | null;
 }) {
   const [mode, setMode] = useState<Mode>("quill");
+  const [userId, setUserId] = useState<string>("");
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [connectionsCount, setConnectionsCount] = useState<number | null>(null);
+  const [connectedTools, setConnectedTools] = useState<Set<string>>(new Set());
   const [activeProjectId, setActiveProjectId] = useState<string | null>(initialProjectId);
   const [activeProjectName, setActiveProjectName] = useState<string>(initialProjectName);
   const [forgeOpen, setForgeOpen] = useState(false);
@@ -52,12 +64,19 @@ export function StudioShell({ projectName: initialProjectName, projectId: initia
   const editorRef = useRef<EditorHandle>(null);
 
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
     try {
       const savedProject = localStorage.getItem(LS_PROJECT);
       if (savedProject) setActiveProjectId(savedProject);
       const savedMode = localStorage.getItem(LS_MODE) as Mode | null;
       if (savedMode === "wire" || savedMode === "quill") setMode(savedMode);
-    } catch {}
+      let uid = localStorage.getItem(LS_USER);
+      if (!uid) { uid = generateUserId(); localStorage.setItem(LS_USER, uid); }
+      setUserId(uid);
+    } catch {
+      setUserId(generateUserId());
+    }
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
   const audit = useCallback(async (html: string, projectIdOverride?: string) => {
@@ -91,9 +110,28 @@ export function StudioShell({ projectName: initialProjectName, projectId: initia
   }, [activeProjectId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (mode === "quill" && activeProjectId) audit(editorContent);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeProjectId, mode]);
+
+  // Load Composio connection count for the gear's red dot.
+  // Refresh when settings closes (user just connected something).
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    fetch(`/api/wire/composio/connections?userId=${encodeURIComponent(userId)}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (cancelled || !d.ok) return;
+        const list: string[] = d.connections ?? [];
+        setConnectionsCount(list.length);
+        setConnectedTools(new Set(list));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [userId, settingsOpen]);
+
 
   const onEditorUpdate = useCallback((html: string) => {
     setEditorContent(html);
@@ -211,6 +249,8 @@ export function StudioShell({ projectName: initialProjectName, projectId: initia
         borderColor: "rgba(26,22,18,0.08)",
         background: "rgba(250,246,238,0.55)",
         backdropFilter: "blur(20px)",
+        position: "relative",
+        zIndex: 60,
       }}>
         <div className="flex items-center gap-4 text-[13px]" style={{ color: "#4A413A" }}>
           <Link href="/" className="flex items-center gap-2 font-extrabold text-base">
@@ -218,7 +258,7 @@ export function StudioShell({ projectName: initialProjectName, projectId: initia
               background: "radial-gradient(circle at 30% 30%, #7E5A0E, #B5601E 70%)",
               boxShadow: "0 0 14px rgba(255,170,106,0.55), inset 0 1px 0 rgba(255,255,255,0.5)",
             }} />
-            beacon
+            yappr
           </Link>
           <div className="flex items-center gap-0.5 rounded-full p-1 ml-2" style={{
             background: "rgba(26,22,18,0.04)",
@@ -247,6 +287,33 @@ export function StudioShell({ projectName: initialProjectName, projectId: initia
             }}>{range.start} → {range.end}</span>
           )}
           <ProjectSelector activeProjectId={activeProjectId} onChange={onProjectChange} />
+          <button
+            onClick={() => setSettingsOpen(true)}
+            title="Settings"
+            style={{
+              width: 36, height: 36, borderRadius: 999,
+              background: "rgba(255,255,255,0.55)",
+              border: "1px solid rgba(26,22,18,0.08)",
+              color: "#4A413A",
+              display: "inline-flex", alignItems: "center", justifyContent: "center",
+              cursor: "pointer",
+              position: "relative",
+              flex: "none",
+            }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+            {connectionsCount === 0 && (
+              <span style={{
+                position: "absolute", top: 5, right: 5,
+                width: 7, height: 7, borderRadius: 999,
+                background: "#B73B4F",
+                boxShadow: "0 0 6px rgba(183,59,79,0.6)",
+              }}/>
+            )}
+          </button>
           {mode === "quill" && (
             <button className="px-4 py-2 rounded-full text-[13px] font-bold" style={{
               background: "#1A1612", color: "#FAF6EE",
@@ -255,7 +322,33 @@ export function StudioShell({ projectName: initialProjectName, projectId: initia
         </div>
       </div>
 
-      {mode === "quill" ? (
+      {mode === "quill" && !activeProjectId ? (
+        <div className="flex-1 min-h-0 flex items-center justify-center px-8">
+          <section className="max-w-[660px] rounded-[24px] p-8" style={{
+            background: "rgba(255,255,255,0.58)",
+            border: "1px solid rgba(26,22,18,0.08)",
+            boxShadow: "0 24px 60px rgba(26,22,18,0.08)",
+            backdropFilter: "blur(14px)",
+          }}>
+            <div className="text-[10px] font-extrabold uppercase tracking-[0.26em] mb-3" style={{ color: "#B5601E" }}>
+              Peec project required
+            </div>
+            <h1 className="text-[34px] leading-tight font-extrabold tracking-[-0.02em] mb-3">
+              Select your product before writing.
+            </h1>
+            <p className="text-[15px] leading-[1.6] mb-5" style={{ color: "#4A413A", fontFamily: '"New York", Georgia, serif' }}>
+              The editor starts blank and only audits against your own Peec data. Use the project selector in the top bar to pick a project, or set <code>PEEC_PROJECT_ID</code> in <code>.env.local</code> for a default.
+            </p>
+            <div className="rounded-[16px] p-4 text-[12px] leading-relaxed" style={{
+              background: "rgba(26,22,18,0.05)",
+              color: "#4A413A",
+              border: "1px solid rgba(26,22,18,0.06)",
+            }}>
+              No sample competitor copy is loaded. Paste your own page draft or generate one from Forge after selecting a Peec project.
+            </div>
+          </section>
+        </div>
+      ) : mode === "quill" ? (
         <div className="grid flex-1 min-h-0" style={{ gridTemplateColumns: "1fr 380px" }}>
           <div className="overflow-y-auto beacon-editor-scroll" style={{ overscrollBehavior: "contain" }}>
             <div className="px-20 py-14">
@@ -282,7 +375,7 @@ export function StudioShell({ projectName: initialProjectName, projectId: initia
           />
         </div>
       ) : (
-        <WireShell activeProjectId={activeProjectId} projectName={activeProjectName} />
+        <WireShell activeProjectId={activeProjectId} projectName={activeProjectName} userId={userId} connectedTools={connectedTools} />
       )}
 
       <ForgePanel
@@ -291,6 +384,13 @@ export function StudioShell({ projectName: initialProjectName, projectId: initia
         projectId={activeProjectId}
         projectName={activeProjectName}
         onOpenInQuill={onForgeOpenInQuill}
+      />
+
+      <SettingsPanel
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        userId={userId}
+        projectName={activeProjectName}
       />
 
       <div className="flex items-center justify-between px-7 py-3 border-t text-[12px] flex-none" style={{

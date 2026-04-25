@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
 
   const ownBrand = brands.find((b) => b.is_own);
   const competitorNames = brands.filter((b) => !b.is_own).map((b) => b.name);
-  const doc = html ? parseDoc(html, { competitorNames }) : undefined;
+  const doc = parseDoc(html ?? "", { competitorNames });
 
   const lints = computeAllLints({
     project: {

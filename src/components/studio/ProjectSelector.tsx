@@ -78,11 +78,14 @@ export function ProjectSelector({
           {error && (
             <div className="px-4 py-3 text-[12px]" style={{ color: "#B73B4F" }}>
               {error}
+              <div className="mt-1" style={{ color: "#8E8478" }}>
+                Add your Peec API key to <code>.env.local</code>, then refresh.
+              </div>
             </div>
           )}
           {!error && projects.length === 0 && !loading && (
             <div className="px-4 py-3 text-[12px]" style={{ color: "#8E8478" }}>
-              No projects in your Peec account.
+              No projects found for this Peec API key.
             </div>
           )}
           {projects.map((p) => {

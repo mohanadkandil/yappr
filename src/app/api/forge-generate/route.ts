@@ -79,7 +79,7 @@ Return JSON with two fields:
   const reqBody = {
     model,
     messages: [
-      { role: "system", content: "You are Forge, Beacon's article generator. You produce GEO-optimized drafts grounded in real Peec citation data. No fabrication." },
+      { role: "system", content: "You are Forge, yappr's article generator. You produce GEO-optimized drafts grounded in real Peec citation data. No fabrication." },
       { role: "user", content: userPrompt },
     ],
     temperature: 0.5,
@@ -108,8 +108,8 @@ Return JSON with two fields:
       headers: {
         "Authorization": `Bearer ${apiKey}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://beacon.so",
-        "X-Title": "Beacon Forge",
+        "HTTP-Referer": "https://yappr.ai",
+        "X-Title": "yappr Forge",
       },
       body: JSON.stringify(reqBody),
     });

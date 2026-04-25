@@ -28,7 +28,7 @@ export async function peecClient() {
     },
   });
   const client = new Client(
-    { name: "beacon-studio", version: "0.1.0" },
+    { name: "yappr-studio", version: "0.1.0" },
     { capabilities: {} }
   );
   await client.connect(transport);

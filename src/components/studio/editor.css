@@ -1,5 +1,5 @@
 /*
- * Beacon editor styles — co-located with the Editor component on purpose.
+ * yappr editor styles — co-located with the Editor component on purpose.
  *
  * DO NOT move these to globals.css. Tailwind 4's @layer base preflight
  * resets h1/h2/p to inherit, and the layer cascade in this stack does not
