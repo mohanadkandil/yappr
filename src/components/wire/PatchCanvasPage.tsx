@@ -7,6 +7,7 @@ import { PatchCanvasInline } from "./PatchCanvasInline";
 import type { CanvasNode, CanvasEdge } from "@/lib/wire/graph-builder";
 
 const LS_USER = "beacon.userId";
+const LS_PROJECT = "beacon.activeProjectId";
 
 function isUserPatchId(id: string): boolean {
   return id.startsWith("p_");
@@ -24,12 +25,15 @@ export function PatchCanvasPage({
 }) {
   const router = useRouter();
   const [userId, setUserId] = useState<string>("");
+  const [projectId, setProjectId] = useState<string>("");
 
   useEffect(() => {
     const id = window.setTimeout(() => {
       try {
         const uid = localStorage.getItem(LS_USER) || "";
+        const pid = localStorage.getItem(LS_PROJECT) || "";
         setUserId(uid);
+        setProjectId(pid);
       } catch {}
     }, 0);
     return () => window.clearTimeout(id);
@@ -86,6 +90,7 @@ export function PatchCanvasPage({
         mode={mode}
         status={status}
         userId={userId}
+        projectId={projectId}
         onBack={onBack}
         onSave={onSave}
       />

@@ -5,6 +5,7 @@ import { z } from "zod";
 import type { OutputField } from "@/lib/agent-catalog";
 import type { CanvasNode, CanvasEdge } from "@/lib/wire/graph-builder";
 import { executeTool } from "@/lib/wire/composio";
+import * as peec from "@/lib/peec-rest";
 import { getUserConfig, CONFIG_KEYS } from "@/lib/wire/user-config-store";
 
 export const dynamic = "force-dynamic";
@@ -13,17 +14,18 @@ export const maxDuration = 45;
 /**
  * POST /api/wire/test-agent
  * Body: {
- *   systemPrompt, outputFields, agentName?,         // agent to dry-run
- *   nodes?, edges?, agentNodeId?, userId?,          // graph context for downstream actions
+ *   systemPrompt, outputFields, agentName?,
+ *   nodes?, edges?, agentNodeId?, userId?, projectId?,
  *   sampleInput?,
  * }
  *
- * Two phases:
- *  1. Run the agent through OpenRouter with structured outputs.
- *  2. If a graph + userId are provided, walk downstream action nodes from the
- *     agent and actually fire them (Slack today; GitHub/Notion/Linear/Gmail
- *     will follow the same pattern). Each action's success/failure is
- *     reported back so the canvas toast can show real artifacts.
+ * Three phases:
+ *  1. Walk UPSTREAM peec-read nodes and fetch real Peec REST data so the
+ *     agent sees actual rows instead of an "imagine some data" prompt.
+ *  2. Run the agent through OpenRouter with structured outputs.
+ *  3. Walk DOWNSTREAM action nodes and fire each one for real (Slack /
+ *     GitHub / Linear / Notion / Gmail). Each action's status comes back
+ *     so the canvas toast can show concrete artifacts.
  */
 export async function POST(req: NextRequest) {
   const apiKey = process.env.OPENROUTER_API_KEY;
@@ -41,6 +43,7 @@ export async function POST(req: NextRequest) {
     edges?: CanvasEdge[];
     agentNodeId?: string;
     userId?: string;
+    projectId?: string;
   } = {};
   try { body = await req.json(); } catch {}
   const systemPrompt = (body.systemPrompt ?? "").trim();
@@ -48,10 +51,36 @@ export async function POST(req: NextRequest) {
   if (!systemPrompt) return NextResponse.json({ ok: false, error: "systemPrompt required" }, { status: 400 });
   if (!outputFields.length) return NextResponse.json({ ok: false, error: "outputFields required" }, { status: 400 });
 
-  const userMsg = body.sampleInput?.trim() ||
-    "No upstream Peec data is wired in this dry run. Demonstrate your output by inventing realistic placeholder values that match the schema, and label them clearly as illustrative.";
+  const projectId = body.projectId || process.env.PEEC_PROJECT_ID || "";
 
   const schema = compileZodSchema(outputFields);
+
+  // --- Phase 0: gather real upstream Peec data --------------------------
+  const upstreamReads = body.nodes && body.edges && body.agentNodeId
+    ? collectUpstream(body.nodes, body.edges, body.agentNodeId).filter((n) => n.kind === "peec-read")
+    : [];
+
+  let userMsg: string;
+  const peecDebug: { slug: string; ok: boolean; rowCount?: number; error?: string }[] = [];
+
+  if (upstreamReads.length && projectId) {
+    const sections: string[] = [];
+    for (const node of upstreamReads) {
+      const slug = (node.config ?? "").split(/\s|\(/)[0].trim();
+      const r = await fetchPeecForSlug(slug, projectId);
+      if (r.ok) {
+        peecDebug.push({ slug, ok: true, rowCount: r.rowCount });
+        sections.push(`=== ${slug} (${r.rowCount} rows) ===\n${JSON.stringify(r.data, null, 2).slice(0, 6000)}`);
+      } else {
+        peecDebug.push({ slug, ok: false, error: r.error });
+        sections.push(`=== ${slug} ===\n[error: ${r.error}]`);
+      }
+    }
+    userMsg = `You are running on REAL Peec data for project ${projectId}. Use ONLY this data — do not invent rows, brand names, or numbers. If a field is missing, say so explicitly instead of guessing.\n\n${sections.join("\n\n")}`;
+  } else {
+    userMsg = body.sampleInput?.trim() ||
+      "No upstream Peec data is wired in this dry run. Demonstrate your output by inventing realistic placeholder values that match the schema, and label them clearly as ILLUSTRATIVE (use the word 'illustrative' in every text field).";
+  }
 
   // --- Phase 1: run the agent -------------------------------------------
   let output: Record<string, unknown>;
@@ -62,7 +91,7 @@ export async function POST(req: NextRequest) {
       schema,
       system: systemPrompt,
       prompt: userMsg,
-      temperature: 0.4,
+      temperature: upstreamReads.length ? 0.2 : 0.4,
     });
     output = unpackObjectArrays(result.object as Record<string, unknown>, outputFields);
   } catch (err) {
@@ -85,7 +114,7 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ ok: true, model: modelId, output, executions });
+  return NextResponse.json({ ok: true, model: modelId, output, executions, peecDebug });
 }
 
 // ---------------------------------------------------------------------------
@@ -414,5 +443,57 @@ function buildSlackBlocks(agentName: string, output: Record<string, unknown>, fi
   });
 
   return blocks;
+}
+
+/** BFS over reversed edges from `endId`. Returns nodes upstream of it. */
+function collectUpstream(nodes: CanvasNode[], edges: CanvasEdge[], endId: string): CanvasNode[] {
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+  const adj = new Map<string, string[]>();
+  for (const e of edges) {
+    if (!adj.has(e.to)) adj.set(e.to, []);
+    adj.get(e.to)!.push(e.from);
+  }
+  const seen = new Set<string>([endId]);
+  const queue = [endId];
+  const out: CanvasNode[] = [];
+  while (queue.length) {
+    const id = queue.shift()!;
+    for (const next of adj.get(id) ?? []) {
+      if (seen.has(next)) continue;
+      seen.add(next);
+      const n = byId.get(next);
+      if (n) out.push(n);
+      queue.push(next);
+    }
+  }
+  return out;
+}
+
+/** Dispatch a peec-read tool slug to the matching Peec REST function. */
+async function fetchPeecForSlug(slug: string, projectId: string): Promise<{ ok: true; data: unknown; rowCount: number } | { ok: false; error: string }> {
+  const range = lastNDays(30);
+  try {
+    switch (slug) {
+      case "list_projects":   { const d = await peec.listProjects(); return { ok: true, data: d, rowCount: d.length }; }
+      case "list_brands":     { const d = await peec.listBrands(projectId); return { ok: true, data: d, rowCount: d.length }; }
+      case "list_topics":     { const d = await peec.listTopics(projectId); return { ok: true, data: d, rowCount: d.length }; }
+      case "list_models":     { const d = await peec.listModels(projectId); return { ok: true, data: d, rowCount: d.length }; }
+      case "get_brand_report": { const d = await peec.getBrandReport({ projectId, startDate: range.start, endDate: range.end, limit: 50 }); return { ok: true, data: d, rowCount: d.length }; }
+      case "get_url_report":   { const d = await peec.getURLReport({ projectId, startDate: range.start, endDate: range.end, limit: 50 }); return { ok: true, data: d, rowCount: d.length }; }
+      case "get_domain_report": { const d = await peec.getDomainReport({ projectId, startDate: range.start, endDate: range.end, limit: 50 }); return { ok: true, data: d, rowCount: d.length }; }
+      default:
+        return { ok: false, error: `peec-read slug "${slug}" not wired into the test runner yet — add a mapping in fetchPeecForSlug` };
+    }
+  } catch (err) {
+    return { ok: false, error: (err as Error).message };
+  }
+}
+
+function lastNDays(n: number): { start: string; end: string } {
+  const now = new Date();
+  const end = now.toISOString().slice(0, 10);
+  const startD = new Date(now);
+  startD.setDate(now.getDate() - n);
+  return { start: startD.toISOString().slice(0, 10), end };
 }
 
