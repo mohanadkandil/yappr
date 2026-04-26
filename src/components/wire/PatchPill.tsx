@@ -183,25 +183,25 @@ export function PatchPill({
         </button>
       )}
 
-      {/* Export-to-skill */}
+      {/* Export-to-Cursor — drops a markdown skill into your Cursor / Claude Code workspace */}
       {userId && (
         <button
           onClick={exportSkill}
-          title="Download a Cursor / Claude Code skill that calls this patch"
+          title="Export this patch as a Cursor / Claude Code skill"
           style={{
             flex: "none",
-            padding: "7px 11px", borderRadius: 999,
+            width: 30, height: 30, borderRadius: 999, padding: 0,
             border: "1px solid rgba(26,22,18,0.1)",
             background: "rgba(255,255,255,0.55)",
-            color: "#4A413A",
-            fontFamily: '-apple-system, "SF Pro Text", system-ui',
-            fontSize: 10.5, fontWeight: 800,
-            letterSpacing: "0.04em",
             cursor: "pointer",
-            display: "inline-flex", alignItems: "center", gap: 5,
+            display: "inline-flex", alignItems: "center", justifyContent: "center",
+            transition: "background 140ms",
           }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(26,22,18,0.05)"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.55)"; }}
         >
-          ↗ skill
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/cursor.svg" alt="Cursor" width={14} height={14} style={{ display: "block" }}/>
         </button>
       )}
 

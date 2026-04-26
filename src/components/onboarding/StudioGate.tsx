@@ -17,6 +17,7 @@ export function StudioGate() {
   const [userId, setUserId] = useState<string>("");
   const [projectId, setProjectId] = useState<string | null>(null);
   const [projectName, setProjectName] = useState<string>("Project");
+  const [peecMode, setPeecMode] = useState<string>("");
 
   useEffect(() => {
     let cancelled = false;
@@ -41,6 +42,7 @@ export function StudioGate() {
         if (hasPeecAccess && pid) {
           setProjectId(pid);
           setProjectName(pname);
+          setPeecMode(cfg["peec.mode"] || "custom");
           try { localStorage.setItem(LS_PROJECT, pid); } catch {}
           setPhase("ready");
         } else {
@@ -68,9 +70,10 @@ export function StudioGate() {
     return (
       <Onboarding
         userId={userId}
-        onComplete={(pid, pname) => {
+        onComplete={(pid, pname, mode) => {
           setProjectId(pid);
           setProjectName(pname || "Project");
+          setPeecMode(mode || "custom");
           try { localStorage.setItem(LS_PROJECT, pid); } catch {}
           setPhase("ready");
         }}
@@ -78,5 +81,5 @@ export function StudioGate() {
     );
   }
 
-  return <StudioShell projectName={projectName} projectId={projectId} userId={userId} />;
+  return <StudioShell projectName={projectName} projectId={projectId} userId={userId} peecMode={peecMode} />;
 }

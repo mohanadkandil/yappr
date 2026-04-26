@@ -41,10 +41,13 @@ export function StudioShell({
   projectName: initialProjectName,
   projectId: initialProjectId,
   userId: initialUserId = "",
+  peecMode = "",
 }: {
   projectName: string;
   projectId: string | null;
   userId?: string;
+  /** "demo" loads the prism sample article into Quill on first mount. */
+  peecMode?: string;
 }) {
   const [mode, setMode] = useState<Mode>("quill");
   const [userId, setUserId] = useState<string>(initialUserId);
@@ -61,7 +64,7 @@ export function StudioShell({
   const [auditing, setAuditing] = useState(false);
   const [range, setRange] = useState<{ start: string; end: string } | null>(null);
   const [docMeta, setDocMeta] = useState<{ wordCount: number; h2Count: number } | null>(null);
-  const [editorContent, setEditorContent] = useState<string>(SAMPLE_DOC);
+  const [editorContent, setEditorContent] = useState<string>(peecMode === "demo" ? SAMPLE_DOC : "");
   const [editorKey, setEditorKey] = useState(0);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);

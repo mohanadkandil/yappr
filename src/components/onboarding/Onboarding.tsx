@@ -5,7 +5,7 @@ import { Logo } from "@/components/Logo";
 
 type Project = { id: string; name: string; status?: string };
 
-export function Onboarding({ userId, onComplete }: { userId: string; onComplete: (projectId: string, projectName: string) => void }) {
+export function Onboarding({ userId, onComplete }: { userId: string; onComplete: (projectId: string, projectName: string, mode: "demo" | "custom") => void }) {
   const [step, setStep] = useState<"key" | "project">("key");
   const [apiKey, setApiKey] = useState("");
   const [projects, setProjects] = useState<Project[]>([]);
@@ -50,7 +50,7 @@ export function Onboarding({ userId, onComplete }: { userId: string; onComplete:
       const pid = d.project?.id ?? d.projectId;
       const pname = d.project?.name ?? d.projectName ?? "Demo project";
       if (!pid) { setError("Demo response missing project id."); return; }
-      onComplete(pid, pname);
+      onComplete(pid, pname, "demo");
     } finally { setBusy(false); }
   };
 
@@ -72,7 +72,7 @@ export function Onboarding({ userId, onComplete }: { userId: string; onComplete:
       });
       const d = await r.json();
       if (!d.ok) { setError(d.error || "Save failed."); return; }
-      onComplete(selectedId, project?.name ?? "");
+      onComplete(selectedId, project?.name ?? "", "custom");
     } finally { setBusy(false); }
   };
 
