@@ -483,11 +483,13 @@ export function PatchCanvasInline({
               }}
               title="Export this patch as a Cursor / Claude Code skill"
               style={{
-                width: 32, height: 32, borderRadius: 999, padding: 0,
+                height: 32, padding: "0 14px", borderRadius: 999,
                 border: "1px solid rgba(26,22,18,0.1)",
                 background: "rgba(255,255,255,0.55)",
+                color: "#1A1612",
+                fontSize: 12, fontWeight: 700, letterSpacing: "-0.005em",
                 cursor: "pointer",
-                display: "inline-flex", alignItems: "center", justifyContent: "center",
+                display: "inline-flex", alignItems: "center", gap: 7,
                 transition: "background 140ms",
                 flex: "none",
               }}
@@ -495,7 +497,8 @@ export function PatchCanvasInline({
               onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.55)"; }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/cursor.svg" alt="Cursor" width={14} height={14} style={{ display: "block" }}/>
+              <img src="/cursor.svg" alt="" width={13} height={13} style={{ display: "block" }}/>
+              <span>Export to Cursor</span>
             </button>
           )}
           <button onClick={() => onSave(nodes, edges, name)} style={{
