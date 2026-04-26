@@ -747,8 +747,45 @@ export function PatchCanvasInline({
                         </div>
                       </div>
                     )}
-                    <span style={{ position: "absolute", left: -5, top: 24, width: 10, height: 10, borderRadius: 999, background: pigment, border: "2px solid #FAF6EE" }} />
-                    <span style={{ position: "absolute", right: -5, top: 24, width: 10, height: 10, borderRadius: 999, background: pigment, border: "2px solid #FAF6EE" }} />
+                    {/* Input port — decorative */}
+                    <span style={{
+                      position: "absolute", left: -5, top: 24,
+                      width: 10, height: 10, borderRadius: 999,
+                      background: pigment, border: "2px solid #FAF6EE",
+                      pointerEvents: "none",
+                    }} />
+
+                    {/* Output port — wide invisible hit zone for dragging out an edge */}
+                    <button
+                      data-connect-handle
+                      title="Drag to connect to another node"
+                      onMouseDown={(ev) => {
+                        ev.stopPropagation();
+                        setConnectingFrom(n.id);
+                        setSelectedId(null);
+                      }}
+                      style={{
+                        position: "absolute",
+                        right: -16, top: 14,
+                        width: 32, height: 32,
+                        padding: 0, border: 0,
+                        background: "transparent",
+                        cursor: "crosshair",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}
+                    >
+                      <span style={{
+                        width: connectingFrom === n.id ? 14 : 12,
+                        height: connectingFrom === n.id ? 14 : 12,
+                        borderRadius: 999,
+                        background: connectingFrom === n.id ? pigment : "#FAF6EE",
+                        border: `2px solid ${pigment}`,
+                        boxShadow: connectingFrom === n.id
+                          ? `0 0 0 4px ${pigment}28`
+                          : `0 1px 2px rgba(26,22,18,0.18)`,
+                        transition: "width 120ms, height 120ms, box-shadow 120ms",
+                      }}/>
+                    </button>
                   </div>
                 );
               })}
