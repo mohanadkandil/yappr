@@ -78,6 +78,10 @@ EXTERNAL TOOL CATALOG (Composio MCP, used in action nodes):
 
 RULES:
 - Pick the smallest set of tools that actually answers the user's request.
+- For citation gaps / "competitors are cited but I'm not" / which pages to fix: use get_url_report (it returns mentioned_brand_ids per URL).
+- For brand-level performance, anomalies, share of voice: use get_brand_report.
+- For UGC / editorial source insight: use get_domain_report.
+- The list_* tools return DEFINITIONS only — never use them to answer "what's happening" or "find gaps". Use them only when the user explicitly asks for a list of brands/prompts/topics.
 - Never include destructive Peec write tools (delete_*) unless the user explicitly asked.
 - Each "reasoning" item should be a single short sentence tied to the user's words.`;
 
@@ -97,9 +101,24 @@ RULES:
   }
 
   // Defense-in-depth: drop anything that somehow slipped past the strict enums.
-  const peecReads = plan.peecReads.filter((r) => findPeecTool(r.slug)?.kind === "read");
+  let peecReads = plan.peecReads.filter((r) => findPeecTool(r.slug)?.kind === "read");
   const peecWrites = plan.peecWrites.filter((w) => findPeecTool(w.slug)?.kind === "write");
   const agent = plan.agent && findAgent(plan.agent.slug) ? plan.agent : null;
+
+  // Guard: agents that need citation signal must have a *_report read upstream.
+  // If the LLM picked only list_* tools (definitions), graft on the right report.
+  const SIGNAL_REPORTS = new Set(["get_url_report", "get_brand_report", "get_domain_report"]);
+  const needsSignal = agent?.slug && [
+    "citation-hunter", "competitor-counter", "anomaly-autopsy",
+    "executive-brief", "schema-author", "pr-narrator",
+  ].includes(agent.slug);
+  if (needsSignal && !peecReads.some((r) => SIGNAL_REPORTS.has(r.slug))) {
+    const fallbackSlug = agent.slug === "anomaly-autopsy" ? "get_brand_report" : "get_url_report";
+    peecReads = [
+      ...peecReads,
+      { slug: fallbackSlug, paramHint: "last 30d", why: `auto-added: ${agent.slug} needs citation signal, not just definitions` },
+    ];
+  }
 
   // -------------------------- GRAPH PROJECTION ------------------------------
 
