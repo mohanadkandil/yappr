@@ -12,6 +12,8 @@
     "@anthropic-ai/sdk": "^0.91.1",
     "@base-ui/react": "^1.4.1",
     "@modelcontextprotocol/sdk": "^1.29.0",
+    "@octokit/rest": "^22.0.1",
+    "@slack/webhook": "^7.0.9",
     "@tiptap/extension-placeholder": "^3.22.4",
     "@tiptap/pm": "^3.22.4",
     "@tiptap/react": "^3.22.4",

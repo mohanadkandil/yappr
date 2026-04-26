@@ -1,0 +1,329 @@
+/*
+ * Beacon editor styles — co-located with the Editor component on purpose.
+ *
+ * DO NOT move these to globals.css. Tailwind 4's @layer base preflight
+ * resets h1/h2/p to inherit, and the layer cascade in this stack does not
+ * reliably yield to unlayered or @layer utilities styles in globals.css.
+ * Keeping the editor styles in their own CSS file (imported only by the
+ * client editor component) means Tailwind doesn't process them through its
+ * layer extractor, and !important is enough to win.
+ *
+ * If editor styles ever break again, check:
+ *   1. that this file is imported by Editor.tsx (`import "./editor.css"`)
+ *   2. that none of these rules were copied back into globals.css
+ *   3. that .beacon-editor is still on the ProseMirror element (Editor.tsx
+ *      sets it via editorProps.attributes.class)
+ */
+
+/* ---- 8-pigment palette as CSS variables for the underline marks ---- */
+.beacon-editor-frame {
+  --rose-deep: #B73B4F;
+  --peach-deep: #B5601E;
+  --sage-deep: #4A7A45;
+  --mint-deep: #2F8466;
+  --lavender-deep: #6E4FAE;
+}
+
+.beacon-editor.beacon-editor {
+  font-family: "New York", "Iowan Old Style", "Charter", Georgia, serif !important;
+  font-size: 19px !important;
+  line-height: 1.65 !important;
+  color: #1A1612 !important;
+  max-width: 640px;
+  min-height: 60vh;
+}
+.beacon-editor.beacon-editor:focus { outline: none !important; }
+
+.beacon-editor h1 {
+  font-family: -apple-system, "SF Pro Display", "SF Pro", system-ui !important;
+  font-weight: 800 !important;
+  font-size: 56px !important;
+  line-height: 1.04 !important;
+  letter-spacing: -0.03em !important;
+  margin: 0 0 24px !important;
+  color: #1A1612 !important;
+  display: block !important;
+  position: relative !important;
+}
+.beacon-editor h2 {
+  font-family: -apple-system, "SF Pro Display", "SF Pro", system-ui !important;
+  font-weight: 800 !important;
+  font-size: 28px !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.02em !important;
+  margin: 36px 0 16px !important;
+  color: #1A1612 !important;
+  display: block !important;
+  position: relative !important;
+}
+.beacon-editor h3 {
+  font-family: -apple-system, "SF Pro Display", "SF Pro", system-ui !important;
+  font-weight: 700 !important;
+  font-size: 20px !important;
+  line-height: 1.25 !important;
+  margin: 28px 0 10px !important;
+  color: #1A1612 !important;
+  display: block !important;
+}
+.beacon-editor p {
+  margin: 0 0 22px !important;
+  font-size: 19px !important;
+  line-height: 1.65 !important;
+  font-family: "New York", "Iowan Old Style", "Charter", Georgia, serif !important;
+  color: #1A1612 !important;
+  display: block !important;
+  position: relative !important;
+}
+.beacon-editor em {
+  font-style: italic !important;
+  font-family: "New York", "Iowan Old Style", "Charter", Georgia, serif !important;
+}
+.beacon-editor strong { font-weight: 700 !important; }
+.beacon-editor ul,
+.beacon-editor ol {
+  margin: 0 0 22px !important;
+  padding-left: 24px !important;
+  font-family: "New York", "Iowan Old Style", "Charter", Georgia, serif !important;
+  font-size: 19px !important;
+  line-height: 1.65 !important;
+}
+.beacon-editor li { margin: 0 0 6px !important; }
+.beacon-editor blockquote {
+  margin: 0 0 22px !important;
+  padding: 4px 0 4px 20px !important;
+  border-left: 3px solid #B73B4F !important;
+  font-style: italic !important;
+  color: #4A413A !important;
+}
+.beacon-editor p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder) !important;
+  float: left !important;
+  color: #8E8478 !important;
+  pointer-events: none !important;
+  height: 0 !important;
+}
+
+/* =====================================================================
+   LINT INDICATORS — colored underlines + gutter dots on targeted elements
+   ===================================================================== */
+
+/* H1 underline (drives off [data-lint-h1="rose|peach|sage|mint"]) */
+.beacon-editor-frame[data-lint-h1] .beacon-editor h1 {
+  background-image: linear-gradient(
+    transparent calc(100% - 8px),
+    var(--lint-h1-color) calc(100% - 8px),
+    var(--lint-h1-color) calc(100% - 5px),
+    transparent calc(100% - 5px)
+  ) !important;
+  background-repeat: no-repeat !important;
+  background-size: 100% 100% !important;
+  padding-bottom: 6px !important;
+  transition: background-image 240ms ease;
+}
+.beacon-editor-frame[data-lint-h1="rose"]     { --lint-h1-color: var(--rose-deep); }
+.beacon-editor-frame[data-lint-h1="peach"]    { --lint-h1-color: var(--peach-deep); }
+.beacon-editor-frame[data-lint-h1="sage"]     { --lint-h1-color: var(--sage-deep); }
+.beacon-editor-frame[data-lint-h1="mint"]     { --lint-h1-color: var(--mint-deep); }
+.beacon-editor-frame[data-lint-h1="lavender"] { --lint-h1-color: var(--lavender-deep); }
+
+/* H1 gutter dot — positioned to the left of the editor canvas */
+.beacon-editor-frame[data-lint-h1] .beacon-editor h1::before {
+  content: "" !important;
+  position: absolute !important;
+  left: -28px !important;
+  top: 26px !important;
+  width: 10px !important;
+  height: 10px !important;
+  border-radius: 999px !important;
+  background: var(--lint-h1-color) !important;
+  box-shadow: 0 0 12px var(--lint-h1-color) !important;
+  animation: beacon-pulse 2.4s ease-in-out infinite;
+}
+
+/* Intro paragraph (first p) underline */
+.beacon-editor-frame[data-lint-intro] .beacon-editor p:first-of-type {
+  background-image: linear-gradient(
+    transparent calc(100% - 6px),
+    var(--lint-intro-color) calc(100% - 6px),
+    var(--lint-intro-color) calc(100% - 4px),
+    transparent calc(100% - 4px)
+  ) !important;
+  background-repeat: no-repeat !important;
+  background-size: 100% 100% !important;
+  padding-bottom: 4px !important;
+  transition: background-image 240ms ease;
+}
+.beacon-editor-frame[data-lint-intro="rose"]     { --lint-intro-color: var(--rose-deep); }
+.beacon-editor-frame[data-lint-intro="peach"]    { --lint-intro-color: var(--peach-deep); }
+.beacon-editor-frame[data-lint-intro="sage"]     { --lint-intro-color: var(--sage-deep); }
+.beacon-editor-frame[data-lint-intro="mint"]     { --lint-intro-color: var(--mint-deep); }
+.beacon-editor-frame[data-lint-intro="lavender"] { --lint-intro-color: var(--lavender-deep); }
+
+.beacon-editor-frame[data-lint-intro] .beacon-editor p:first-of-type::before {
+  content: "" !important;
+  position: absolute !important;
+  left: -28px !important;
+  top: 8px !important;
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 999px !important;
+  background: var(--lint-intro-color) !important;
+  box-shadow: 0 0 10px var(--lint-intro-color) !important;
+  animation: beacon-pulse 2.4s ease-in-out infinite;
+}
+
+/* First H2 underline (for "section" target — schema gap, comparison structure) */
+.beacon-editor-frame[data-lint-section] .beacon-editor h2:first-of-type {
+  background-image: linear-gradient(
+    transparent calc(100% - 6px),
+    var(--lint-section-color) calc(100% - 6px),
+    var(--lint-section-color) calc(100% - 4px),
+    transparent calc(100% - 4px)
+  ) !important;
+  background-repeat: no-repeat !important;
+  background-size: 100% 100% !important;
+  padding-bottom: 4px !important;
+  transition: background-image 240ms ease;
+}
+.beacon-editor-frame[data-lint-section="rose"]     { --lint-section-color: var(--rose-deep); }
+.beacon-editor-frame[data-lint-section="peach"]    { --lint-section-color: var(--peach-deep); }
+.beacon-editor-frame[data-lint-section="sage"]     { --lint-section-color: var(--sage-deep); }
+.beacon-editor-frame[data-lint-section="mint"]     { --lint-section-color: var(--mint-deep); }
+.beacon-editor-frame[data-lint-section="lavender"] { --lint-section-color: var(--lavender-deep); }
+
+.beacon-editor-frame[data-lint-section] .beacon-editor h2:first-of-type::before {
+  content: "" !important;
+  position: absolute !important;
+  left: -28px !important;
+  top: 12px !important;
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 999px !important;
+  background: var(--lint-section-color) !important;
+  box-shadow: 0 0 10px var(--lint-section-color) !important;
+  animation: beacon-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes beacon-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.95; }
+  50% { transform: scale(1.25); opacity: 1; }
+}
+
+/* Hover affordance — when hovering a marked element, slightly emphasize it */
+.beacon-editor-frame[data-lint-h1] .beacon-editor h1:hover,
+.beacon-editor-frame[data-lint-intro] .beacon-editor p:first-of-type:hover,
+.beacon-editor-frame[data-lint-section] .beacon-editor h2:first-of-type:hover {
+  cursor: help;
+}
+
+/* ---- Custom scrollbar for the lint sidebar + editor column ---- */
+.beacon-sidebar-scroll::-webkit-scrollbar,
+.beacon-editor-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+.beacon-sidebar-scroll::-webkit-scrollbar-track,
+.beacon-editor-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.beacon-sidebar-scroll::-webkit-scrollbar-thumb,
+.beacon-editor-scroll::-webkit-scrollbar-thumb {
+  background: rgba(26, 22, 18, 0.18);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.beacon-sidebar-scroll::-webkit-scrollbar-thumb:hover,
+.beacon-editor-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(26, 22, 18, 0.32);
+  background-clip: padding-box;
+}
+/* Firefox */
+.beacon-sidebar-scroll,
+.beacon-editor-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(26, 22, 18, 0.22) transparent;
+}
+
+/* ---- Landing keycap interactions ---- */
+.beacon-keycap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 22px;
+  border-radius: 14px;
+  font-family: -apple-system, "SF Pro Text", system-ui;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+  background: linear-gradient(180deg, #FFF8E8, #F4D58A);
+  color: #3B2A0E;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.9) inset,
+    0 -2px 0 #B98E2A inset,
+    0 6px 0 #B98E2A,
+    0 12px 28px rgba(185, 142, 42, 0.32);
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 140ms cubic-bezier(0.2, 0.7, 0.3, 1.2), box-shadow 140ms;
+  user-select: none;
+}
+.beacon-keycap:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.95) inset,
+    0 -2px 0 #B98E2A inset,
+    0 8px 0 #B98E2A,
+    0 18px 36px rgba(185, 142, 42, 0.42);
+}
+.beacon-keycap:active {
+  transform: translateY(4px);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.9) inset,
+    0 -1px 0 #B98E2A inset,
+    0 2px 0 #B98E2A,
+    0 4px 12px rgba(185, 142, 42, 0.25);
+}
+.beacon-keycap.beacon-keycap-dark {
+  background: linear-gradient(180deg, #2C2317, #1A130B);
+  color: #F4D265;
+  box-shadow:
+    0 1px 0 rgba(244, 210, 101, 0.18) inset,
+    0 -2px 0 #0A0703 inset,
+    0 6px 0 #0A0703,
+    0 12px 28px rgba(0, 0, 0, 0.45);
+}
+.beacon-keycap.beacon-keycap-dark:hover {
+  box-shadow:
+    0 1px 0 rgba(244, 210, 101, 0.22) inset,
+    0 -2px 0 #0A0703 inset,
+    0 8px 0 #0A0703,
+    0 18px 36px rgba(0, 0, 0, 0.55);
+}
+.beacon-keycap.beacon-keycap-dark:active {
+  box-shadow:
+    0 1px 0 rgba(244, 210, 101, 0.18) inset,
+    0 -1px 0 #0A0703 inset,
+    0 2px 0 #0A0703,
+    0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Subtle pulse on the primary CTA every ~6s to draw the eye */
+.beacon-keycap-primary {
+  animation: beacon-keycap-breathe 6s ease-in-out infinite;
+}
+@keyframes beacon-keycap-breathe {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-1px); }
+}
+.beacon-keycap-primary:hover { animation: none; }
+
+/* Gradient background animation — subtle paint shift */
+.beacon-bg-shift {
+  background-size: 120% 120%;
+  animation: beacon-bg-shift 18s ease-in-out infinite;
+}
+@keyframes beacon-bg-shift {
+  0%, 100% { background-position: 0% 0%; }
+  50%      { background-position: 100% 100%; }
+}

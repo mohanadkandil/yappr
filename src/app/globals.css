@@ -128,3 +128,102 @@
     @apply font-sans;
   }
 }
+
+/* ---- Beacon editor styles live in src/components/studio/editor.css ----
+   Do NOT add editor styles here. The editor.css file is co-located with the
+   Editor.tsx component and imported by it directly so Tailwind 4's @layer
+   base preflight cannot interfere with editor headings/paragraphs. */
+
+/* ============================================================
+   Landing page interactions — keycap buttons + bg shift.
+   These are CLASS-based, no element resets, so they don't
+   conflict with Tailwind preflight.
+   ============================================================ */
+.beacon-keycap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 22px;
+  border-radius: 14px;
+  font-family: -apple-system, "SF Pro Text", system-ui;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+  background: linear-gradient(180deg, #FFF8E8, #F4D58A);
+  color: #3B2A0E;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.9) inset,
+    0 -2px 0 #B98E2A inset,
+    0 6px 0 #B98E2A,
+    0 12px 28px rgba(185, 142, 42, 0.32);
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 140ms cubic-bezier(0.2, 0.7, 0.3, 1.2), box-shadow 140ms;
+  user-select: none;
+}
+.beacon-keycap:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.95) inset,
+    0 -2px 0 #B98E2A inset,
+    0 8px 0 #B98E2A,
+    0 18px 36px rgba(185, 142, 42, 0.42);
+}
+.beacon-keycap:active {
+  transform: translateY(4px);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.9) inset,
+    0 -1px 0 #B98E2A inset,
+    0 2px 0 #B98E2A,
+    0 4px 12px rgba(185, 142, 42, 0.25);
+}
+.beacon-keycap-dark {
+  background: linear-gradient(180deg, #2C2317, #1A130B);
+  color: #F4D265;
+  box-shadow:
+    0 1px 0 rgba(244, 210, 101, 0.18) inset,
+    0 -2px 0 #0A0703 inset,
+    0 6px 0 #0A0703,
+    0 12px 28px rgba(0, 0, 0, 0.45);
+}
+.beacon-keycap-dark:hover {
+  box-shadow:
+    0 1px 0 rgba(244, 210, 101, 0.22) inset,
+    0 -2px 0 #0A0703 inset,
+    0 8px 0 #0A0703,
+    0 18px 36px rgba(0, 0, 0, 0.55);
+}
+.beacon-keycap-dark:active {
+  box-shadow:
+    0 1px 0 rgba(244, 210, 101, 0.18) inset,
+    0 -1px 0 #0A0703 inset,
+    0 2px 0 #0A0703,
+    0 4px 12px rgba(0, 0, 0, 0.4);
+}
+.beacon-keycap-primary {
+  animation: beacon-keycap-breathe 6s ease-in-out infinite;
+}
+@keyframes beacon-keycap-breathe {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-1px); }
+}
+.beacon-keycap-primary:hover,
+.beacon-keycap-primary:active { animation: none; }
+
+.beacon-bg-shift {
+  background-size: 120% 120% !important;
+  animation: beacon-bg-shift 22s ease-in-out infinite;
+}
+@keyframes beacon-bg-shift {
+  0%, 100% { background-position: 0% 0%; }
+  50%      { background-position: 100% 100%; }
+}
+
+.beacon-fade-in-up {
+  animation: beacon-fade-in-up 760ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+@keyframes beacon-fade-in-up {
+  0%   { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}

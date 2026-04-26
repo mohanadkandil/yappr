@@ -8,7 +8,7 @@ export default async function Home() {
   const configured = process.env.PEEC_PROJECT_ID || "";
 
   return (
-    <main className="min-h-screen text-[#1A1612]" style={{
+    <main className="min-h-screen text-[#1A1612] beacon-bg-shift" style={{
       background:
         "radial-gradient(1100px 500px at 18% -10%, #FDE3CC 0%, transparent 60%)," +
         "radial-gradient(900px 600px at 105% 20%, #FBDADA 0%, transparent 60%)," +
@@ -24,13 +24,17 @@ export default async function Home() {
           }} />
           beacon
         </div>
-        <Link href="/studio" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#1A1612] text-[#FAF6EE] text-[13px] font-semibold shadow-md">
+        <Link href="/studio" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-[13px] font-semibold transition-transform"
+              style={{
+                background: "#1A1612", color: "#FAF6EE",
+                boxShadow: "0 6px 18px rgba(26,22,18,0.18)",
+              }}>
           Open Studio →
         </Link>
       </nav>
 
       <section className="grid grid-cols-[1.4fr_1fr] gap-14 items-center px-16 py-14 max-w-[1200px] mx-auto">
-        <div>
+        <div className="beacon-fade-in-up">
           <div className="text-[11px] font-bold uppercase tracking-[0.28em] mb-4" style={{ color: "#B5601E" }}>
             Built on Peec · #BuiltWithPeec
           </div>
@@ -46,31 +50,24 @@ export default async function Home() {
             fontFamily: '"New York", "Iowan Old Style", Georgia, serif',
             color: "#4A413A",
           }}>
-            A writing surface for the AI search era. Every lint is grounded in a real Peec citation — never a guess. Paste a URL or start a draft. Beacon shows you why competitors are quoted, and rewrites the part that lost.
+            A writing surface for the AI search era. Every lint is grounded in a real Peec citation — never a guess. Two modes: <strong>Quill</strong> for editing with a live MCP-backed lint sidebar, <strong>Forge</strong> for generating new article drafts grounded in your tracked competitors and topics.
           </p>
 
           <div className="flex gap-3 mb-10">
-            <Link href="/studio" className="inline-flex items-center gap-2 px-5 py-3.5 rounded-[14px] font-bold text-sm" style={{
-              background: "linear-gradient(180deg, #FFF8E8, #F4D58A)",
-              color: "#3B2A0E",
-              boxShadow: "0 1px 0 rgba(255,255,255,0.9) inset, 0 -2px 0 #B98E2A inset, 0 6px 0 #B98E2A, 0 12px 28px rgba(185, 142, 42, 0.32)",
-            }}>
+            <Link href="/studio" className="beacon-keycap beacon-keycap-primary">
               ⌘ Open Studio
             </Link>
-            <Link href="/api/smoke" className="inline-flex items-center gap-2 px-5 py-3.5 rounded-[14px] font-bold text-sm" style={{
-              background: "linear-gradient(180deg, #2C2317, #1A130B)",
-              color: "#7E5A0E",
-              boxShadow: "0 1px 0 rgba(244, 210, 101, 0.18) inset, 0 -2px 0 #0A0703 inset, 0 6px 0 #0A0703, 0 12px 28px rgba(0, 0, 0, 0.45)",
-            }}>
-              ▸ Smoke · /api/smoke
+            <Link href="/api/smoke" className="beacon-keycap beacon-keycap-dark">
+              ▸ Verify Peec · /api/smoke
             </Link>
           </div>
 
           {/* Peec status badge + project picker */}
           {result.ok ? (
-            <div className="rounded-[18px] border p-5" style={{
+            <div className="rounded-[18px] border p-5 beacon-fade-in-up" style={{
               background: "rgba(207, 234, 217, 0.45)",
               borderColor: "rgba(47, 132, 102, 0.25)",
+              animationDelay: "120ms",
             }}>
               <div className="text-[10px] font-bold tracking-[0.22em] uppercase mb-2" style={{ color: "#2F8466" }}>
                 PEEC CONNECTED · {result.projectCount} PROJECT{result.projectCount === 1 ? "" : "S"}
@@ -90,8 +87,7 @@ export default async function Home() {
                       }}>
                         <span className="font-bold" style={{ color: "#1A1612", flex: 1 }}>{p.name}</span>
                         <code className="text-[11px] px-2 py-0.5 rounded font-mono" style={{
-                          background: "rgba(26,22,18,0.06)",
-                          color: "#4A413A",
+                          background: "rgba(26,22,18,0.06)", color: "#4A413A",
                         }}>{p.id}</code>
                         {isActive && (
                           <span className="text-[10px] font-bold tracking-[0.18em] uppercase" style={{ color: "#2F8466" }}>
@@ -105,7 +101,7 @@ export default async function Home() {
               )}
               {!configured && result.projectCount > 0 && (
                 <div className="text-[12px] mt-3 leading-relaxed" style={{ color: "#4A413A" }}>
-                  Copy the ID for the project you want to demo (look for <code className="font-mono">makkr.ai</code>), paste into <code className="font-mono">PEEC_PROJECT_ID</code> in <code className="font-mono">.env.local</code>, refresh.
+                  Pick a project once Studio loads — the project selector in the chrome lets you switch live without editing env files.
                 </div>
               )}
             </div>
@@ -119,13 +115,13 @@ export default async function Home() {
               </div>
               <div className="text-[14px] font-semibold mb-2" style={{ color: "#1A1612" }}>{result.error}</div>
               <div className="text-[12px]" style={{ color: "#4A413A" }}>
-                Verify <code className="font-mono">PEEC_API_KEY</code> and <code className="font-mono">PEEC_API_URL</code> in <code className="font-mono">~/code/beacon/.env.local</code>. Default API URL: <code className="font-mono">https://api.peec.ai/customer/v1</code>.
+                Verify <code className="font-mono">PEEC_API_KEY</code> and <code className="font-mono">PEEC_API_URL</code> in <code className="font-mono">~/code/beacon/.env.local</code>.
               </div>
             </div>
           )}
         </div>
 
-        <div className="justify-self-end">
+        <div className="justify-self-end beacon-fade-in-up" style={{ animationDelay: "200ms" }}>
           <svg viewBox="0 0 360 450" width="360" style={{ display: "block", maxWidth: "100%" }}>
             <defs>
               <linearGradient id="lc" x1="0" y1="0" x2="0" y2="1">
