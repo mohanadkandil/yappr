@@ -86,10 +86,31 @@ const STATUS_CHIP: Record<string, { bg: string; fg: string; label: string }> = {
 
 const DRAG_THRESHOLD_PX = 4;
 
+/** Compute new x/y for each node so the graph's bounding box is centered
+ * inside the given canvas rect. NODE_WIDTH/HEIGHT roughly approximate the
+ * card dimensions — close enough for visual centering, exact pixels not
+ * required. Adds 30px of top padding so the graph doesn't kiss the topbar. */
+function centerNodes(nodes: CanvasNode[], canvasWidth: number, canvasHeight: number): CanvasNode[] {
+  if (!nodes.length) return nodes;
+  const NODE_W = 180;
+  const NODE_H = 64;
+  const minX = Math.min(...nodes.map((n) => n.x));
+  const maxX = Math.max(...nodes.map((n) => n.x + NODE_W));
+  const minY = Math.min(...nodes.map((n) => n.y));
+  const maxY = Math.max(...nodes.map((n) => n.y + NODE_H));
+  const graphW = maxX - minX;
+  const graphH = maxY - minY;
+  const offsetX = Math.max(20, (canvasWidth - graphW) / 2 - minX);
+  // Vertical: center but allow up to a max of (canvasHeight/2 - graphH/2) so
+  // even a tall graph stays visible. Floor at 30px from the top.
+  const offsetY = Math.max(30, (canvasHeight - graphH) / 2 - minY);
+  return nodes.map((n) => ({ ...n, x: n.x + offsetX, y: n.y + offsetY }));
+}
+
 export function PatchCanvasInline({
   patchName,
   initialNodes, initialEdges,
-  mode, status, userId,
+  mode, status, userId, projectId,
   onBack, onSave,
 }: {
   patchId: string;
@@ -99,6 +120,7 @@ export function PatchCanvasInline({
   mode: "new" | "edit";
   status?: string;
   userId?: string;
+  projectId?: string;
   onBack: () => void;
   onSave: (nodes: CanvasNode[], edges: CanvasEdge[], name: string) => void;
 }) {
@@ -110,6 +132,7 @@ export function PatchCanvasInline({
   const [connectingFrom, setConnectingFrom] = useState<string | null>(null);
   const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
   const [selectedEdgeIdx, setSelectedEdgeIdx] = useState<number | null>(null);
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [prompt, setPrompt] = useState("");
@@ -117,6 +140,7 @@ export function PatchCanvasInline({
   const [reasoning, setReasoning] = useState<string[] | null>(null);
   const [reasoningOpen, setReasoningOpen] = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
+  const didCenterRef = useRef(false);
   // For click-vs-drag detection
   const pressStart = useRef<{ id: string; x: number; y: number; moved: boolean } | null>(null);
 
@@ -131,6 +155,14 @@ export function PatchCanvasInline({
   }, []);
 
   // Esc closes (back), Delete/Backspace removes selected node
+  useEffect(() => {
+    if (didCenterRef.current || !canvasRef.current) return;
+    if (!initialNodes.length) { didCenterRef.current = true; return; }
+    const rect = canvasRef.current.getBoundingClientRect();
+    setNodes((cur) => centerNodes(cur, rect.width, rect.height));
+    didCenterRef.current = true;
+  }, [initialNodes.length]);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
@@ -251,7 +283,9 @@ export function PatchCanvasInline({
         toast.error(`Synthesizer failed: ${data.error || "unknown"}`);
         return;
       }
-      setNodes(data.nodes);
+      const rect = canvasRef.current?.getBoundingClientRect();
+      const placed = rect ? centerNodes(data.nodes, rect.width, rect.height) : data.nodes;
+      setNodes(placed);
       setEdges(data.edges);
       setSelectedId(null);
       setReasoning((data.reasoning ?? null) as string[] | null);
@@ -310,6 +344,7 @@ export function PatchCanvasInline({
           edges,
           agentNodeId: target.id,
           userId,
+          projectId,
         }),
       });
       const data = await res.json();
@@ -529,7 +564,17 @@ export function PatchCanvasInline({
                       }}
                     >
                       <span style={{ display: "inline-flex", color: n.pigment, flex: "none" }}>
+                        {(n.kind === "peec-read" || n.kind === "peec-write") ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src="/peeclogo.png" alt="Peec" width={14} height={14}
+                             style={{
+                               flex: "none", objectFit: "cover",
+                               borderRadius: 4,
+                               boxShadow: `0 0 0 1px ${n.pigment}33`,
+                             }}/>
+                      ) : (
                         <NodeIcon def={n} color={n.pigment} />
+                      )}
                       </span>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontWeight: 700, fontSize: 11.5, color: "#1A1612" }}>{n.label}</div>
@@ -582,11 +627,12 @@ export function PatchCanvasInline({
                   if (!a || !b) return null;
                   const x1 = a.x + 170, y1 = a.y + 32, x2 = b.x + 10, y2 = b.y + 32;
                   const cx = (x1 + x2) / 2;
+                  const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
                   const sel = selectedEdgeIdx === i;
                   return (
                     <g key={i}>
                       <path d={`M ${x1} ${y1} C ${cx} ${y1}, ${cx} ${y2}, ${x2} ${y2}`}
-                            stroke="transparent" strokeWidth="14" fill="none"
+                            stroke="transparent" strokeWidth="16" fill="none"
                             style={{ pointerEvents: "stroke", cursor: "pointer" }}
                             onMouseDown={(ev) => { ev.stopPropagation(); setSelectedEdgeIdx(i); setSelectedId(null); }}/>
                       <path d={`M ${x1} ${y1} C ${cx} ${y1}, ${cx} ${y2}, ${x2} ${y2}`}
@@ -594,6 +640,17 @@ export function PatchCanvasInline({
                             strokeWidth={sel ? 2.2 : 1.4}
                             fill="none" opacity={sel ? 0.95 : 0.55}
                             pointerEvents="none"/>
+                      {sel && (
+                        <g transform={`translate(${mx}, ${my})`} style={{ pointerEvents: "auto", cursor: "pointer" }}
+                           onMouseDown={(ev) => {
+                             ev.stopPropagation();
+                             setEdges((cur) => cur.filter((_, j) => j !== i));
+                             setSelectedEdgeIdx(null);
+                           }}>
+                          <circle r="9" fill="#B73B4F" stroke="#FAF6EE" strokeWidth="2"/>
+                          <path d="M -3.5 -3.5 L 3.5 3.5 M 3.5 -3.5 L -3.5 3.5" stroke="#FAF6EE" strokeWidth="2" strokeLinecap="round"/>
+                        </g>
+                      )}
                     </g>
                   );
                 })}
@@ -623,6 +680,8 @@ export function PatchCanvasInline({
                   <div
                     key={n.id}
                     onMouseDown={(e) => onNodeMouseDown(e, n.id)}
+                    onMouseEnter={() => setHoveredNodeId(n.id)}
+                    onMouseLeave={() => setHoveredNodeId((cur) => (cur === n.id ? null : cur))}
                     style={{
                       position: "absolute",
                       left: n.x, top: n.y, width: isUnconfiguredAction ? 200 : 180,
@@ -639,31 +698,17 @@ export function PatchCanvasInline({
                       transition: dragId === n.id ? "none" : "box-shadow 140ms",
                     }}
                   >
-                    <button
-                      data-connect-handle
-                      title="Connect to another node"
-                      onMouseDown={(ev) => {
-                        ev.stopPropagation();
-                        setConnectingFrom(n.id);
-                        setSelectedId(null);
-                      }}
-                      style={{
-                        position: "absolute",
-                        right: -10, top: "50%", transform: "translateY(-50%)",
-                        width: 18, height: 18, borderRadius: 999,
-                        border: `1.5px solid ${pigment}`,
-                        background: connectingFrom === n.id ? pigment : "#FAF6EE",
-                        color: connectingFrom === n.id ? "#FAF6EE" : pigment,
-                        cursor: "crosshair",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 10, fontWeight: 800,
-                        boxShadow: "0 2px 6px rgba(26,22,18,0.12)",
-                        padding: 0,
-                      }}
-                    >→</button>
                     <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
                       {n.kind === "action" && n.toolSlug ? (
                         <ToolIcon slug={n.toolSlug} width={16} height={16} />
+                      ) : (n.kind === "peec-read" || n.kind === "peec-write") ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src="/peeclogo.png" alt="Peec" width={14} height={14}
+                             style={{
+                               flex: "none", objectFit: "cover",
+                               borderRadius: 4,
+                               boxShadow: `0 0 0 1px ${pigment}33`,
+                             }}/>
                       ) : def ? (
                         <span style={{ display: "inline-flex", color: pigment, flex: "none" }}>
                           <NodeIcon def={def} color={pigment} />
@@ -716,6 +761,11 @@ export function PatchCanvasInline({
               onPickTool={(tool) => selected && pickTool(selected.id, tool)}
               onDelete={() => selected && removeNode(selected.id)}
               onClose={() => setSelectedId(null)}
+              onConnect={() => {
+                if (!selected) return;
+                setConnectingFrom(selected.id);
+                setSelectedId(null);
+              }}
             />
 
 
@@ -785,13 +835,14 @@ export function PatchCanvasInline({
 // ============================================================
 
 function PropertiesPanel({
-  selected, onUpdate, onPickTool, onDelete, onClose,
+  selected, onUpdate, onPickTool, onDelete, onClose, onConnect,
 }: {
   selected: CanvasNode | null;
   onUpdate: (patch: Partial<CanvasNode>) => void;
   onPickTool: (tool: typeof TOOL_OPTIONS[number]) => void;
   onDelete: () => void;
   onClose: () => void;
+  onConnect: () => void;
 }) {
   const visible = !!selected;
   const def = selected ? NODE_LIBRARY.find((n) => n.kind === selected.kind) : null;
@@ -822,12 +873,21 @@ function PropertiesPanel({
               letterSpacing: "0.26em", textTransform: "uppercase",
               color: pigment,
             }}>NODE · {def.kind.toUpperCase().replace(/-/g, " ")}</div>
-            <button onClick={onClose} style={{
-              padding: "3px 9px", borderRadius: 999,
-              border: "1px solid rgba(26,22,18,0.08)",
-              background: "rgba(255,255,255,0.55)",
-              color: "#4A413A", fontSize: 10, fontWeight: 700, cursor: "pointer",
-            }}>esc · close</button>
+            <div style={{ display: "flex", gap: 6 }}>
+              <button onClick={onConnect} title="Click here, then click another node to wire them" style={{
+                padding: "3px 10px", borderRadius: 999,
+                border: `1px solid ${pigment}33`,
+                background: `${pigment}14`,
+                color: pigment, fontSize: 10, fontWeight: 800, cursor: "pointer",
+                letterSpacing: "0.04em",
+              }}>→ connect</button>
+              <button onClick={onClose} style={{
+                padding: "3px 9px", borderRadius: 999,
+                border: "1px solid rgba(26,22,18,0.08)",
+                background: "rgba(255,255,255,0.55)",
+                color: "#4A413A", fontSize: 10, fontWeight: 700, cursor: "pointer",
+              }}>esc · close</button>
+            </div>
           </div>
 
           {/* Name */}
