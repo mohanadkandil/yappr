@@ -18,7 +18,7 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 export function PatchPill({
-  patch, enabled, onToggle, onRun, onOpenDetail, lastRun, connected,
+  patch, enabled, onToggle, onRun, onOpenDetail, lastRun, connected, userId,
 }: {
   patch: Recipe;
   enabled: boolean;
@@ -27,8 +27,17 @@ export function PatchPill({
   onOpenDetail: () => void;
   lastRun?: Run;
   connected?: boolean;
+  userId?: string;
 }) {
   const [running, setRunning] = useState(false);
+
+  const exportSkill = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!userId) return;
+    const url = `/api/wire/patches/${patch.id}/skill?userId=${encodeURIComponent(userId)}`;
+    // Trigger a download in a new tab — Content-Disposition handles the rest
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
 
   const fire = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -171,6 +180,28 @@ export function PatchPill({
             marginTop: 3,
             boxShadow: "0 1px 1px rgba(0,0,0,0.18)",
           }} />
+        </button>
+      )}
+
+      {/* Export-to-skill */}
+      {userId && (
+        <button
+          onClick={exportSkill}
+          title="Download a Cursor / Claude Code skill that calls this patch"
+          style={{
+            flex: "none",
+            padding: "7px 11px", borderRadius: 999,
+            border: "1px solid rgba(26,22,18,0.1)",
+            background: "rgba(255,255,255,0.55)",
+            color: "#4A413A",
+            fontFamily: '-apple-system, "SF Pro Text", system-ui',
+            fontSize: 10.5, fontWeight: 800,
+            letterSpacing: "0.04em",
+            cursor: "pointer",
+            display: "inline-flex", alignItems: "center", gap: 5,
+          }}
+        >
+          ↗ skill
         </button>
       )}
 
