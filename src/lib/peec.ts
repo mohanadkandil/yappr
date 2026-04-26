@@ -6,6 +6,12 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
  *
  * Non-fabrication rule: if the MCP returns nothing, the caller renders empty.
  * Never invent data when the server returns no rows.
+ *
+ * Auth: Peec's official MCP uses an OAuth redirect flow for interactive clients
+ * (Claude Desktop, Cursor, VS Code). For server-side use we send the API key as
+ * both Authorization: Bearer and X-API-Key in case either is accepted as a
+ * fallback. If the MCP rejects both, the smoke route surfaces a 401 and we
+ * pivot to the REST surface (see peecRest.ts).
  */
 export async function peecClient() {
   const url = process.env.PEEC_MCP_URL;
@@ -15,7 +21,10 @@ export async function peecClient() {
 
   const transport = new StreamableHTTPClientTransport(new URL(url), {
     requestInit: {
-      headers: { Authorization: `Bearer ${apiKey}` },
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "X-API-Key": apiKey,
+      },
     },
   });
   const client = new Client(
