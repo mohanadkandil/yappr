@@ -5,7 +5,7 @@ export type FixTarget = "h1" | "intro" | "section" | "add-schema-block" | "appen
 const SCHEMA_BLOCK_TITLE = "JSON-LD schema (proposed)";
 
 export function applyFixToHtml(html: string, target: FixTarget, newSpan: string): string {
-  const $ = cheerio.load(`<div id="__beacon_root">${html}</div>`, { decodeEntities: false });
+  const $ = cheerio.load(`<div id="__beacon_root">${html}</div>`);
   const root = $("#__beacon_root");
   const stripTags = (s: string) => s.replace(/<\/?[^>]+>/g, "").trim();
 

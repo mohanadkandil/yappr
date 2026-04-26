@@ -14,7 +14,7 @@ type NodeDef = {
   label: string;
   pigment: string;
   config: string;
-  group: "Triggers" | "Reads" | "Think" | "Actions" | "Logic";
+  group: "Triggers" | "Reads" | "Writes" | "Agents" | "Actions";
   icon: { type: "shape"; key: string };
 };
 
