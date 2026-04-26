@@ -140,7 +140,7 @@ export function RecipeCard({
               <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#F4D265" }} />
               Running…
             </>
-          ) : recipe.status === "coming_soon" ? "Coming soon" : "▸ Run now"}
+          ) : recipe.status === "coming_soon" ? "Coming soon" : (<><svg width="9" height="10" viewBox="0 0 9 10" fill="currentColor" style={{marginRight:6}}><path d="M0 0 L9 5 L0 10 z"/></svg>Run now</>)}
         </button>
         {recipe.configurable && recipe.configurable.length > 0 && (
           <button onClick={() => setOpenConfig((o) => !o)} className="px-3 py-1.5 rounded-full text-[12px] font-bold border" style={{

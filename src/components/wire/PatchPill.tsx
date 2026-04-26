@@ -197,7 +197,7 @@ export function PatchPill({
             <span style={{ width: 6, height: 6, borderRadius: 999, background: "#F4D265" }} />
             running
           </>
-        ) : isComingSoon ? "soon" : "▸ run"}
+        ) : isComingSoon ? "soon" : (<><svg width="7" height="8" viewBox="0 0 7 8" fill="currentColor" style={{flex:"none"}}><path d="M0 0 L7 4 L0 8 z"/></svg>run</>)}
       </button>
     </article>
   );

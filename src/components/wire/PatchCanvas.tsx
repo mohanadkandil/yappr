@@ -206,7 +206,7 @@ export function PatchCanvas({ open, onClose }: { open: boolean; onClose: () => v
             background: "rgba(255,255,255,0.55)",
             color: "#4A413A", fontSize: 12, fontWeight: 700, cursor: "pointer",
             height: 32,
-          }}>▸ test run</button>
+          }}><svg width="8" height="9" viewBox="0 0 8 9" fill="currentColor" style={{marginRight:6}}><path d="M0 0 L8 4.5 L0 9 z"/></svg>test run</button>
           <button style={{
             padding: "7px 14px", borderRadius: 999,
             border: 0, background: "#1A1612", color: "#FAF6EE",

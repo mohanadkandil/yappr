@@ -474,7 +474,8 @@ export function PatchCanvasInline({
               fontSize: 12, fontWeight: 700,
               cursor: testing ? "wait" : "pointer",
               height: 32,
-            }}>{testing ? "running…" : "▸ test run"}</button>
+              display: "inline-flex", alignItems: "center", gap: 6,
+            }}>{testing ? "running…" : (<><svg width="8" height="9" viewBox="0 0 8 9" fill="currentColor" style={{flex:"none"}}><path d="M0 0 L8 4.5 L0 9 z"/></svg>test run</>)}</button>
           {userId && (
             <button
               onClick={() => {

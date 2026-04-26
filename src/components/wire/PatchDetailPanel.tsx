@@ -127,7 +127,7 @@ export function PatchDetailPanel({
               cursor: running ? "wait" : "pointer",
               display: "inline-flex", alignItems: "center", gap: 6,
             }}>
-              {running ? "running…" : patch.status === "coming_soon" ? "coming soon" : "▸ run now"}
+              {running ? "running…" : patch.status === "coming_soon" ? "coming soon" : (<><svg width="9" height="10" viewBox="0 0 9 10" fill="currentColor" style={{marginRight:6}}><path d="M0 0 L9 5 L0 10 z"/></svg>run now</>)}
             </button>
             <button
               onClick={() => { onClose(); router.push(`/wire/${patch.id}`); }}
