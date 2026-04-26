@@ -124,17 +124,16 @@ export function Onboarding({ userId, onComplete }: { userId: string; onComplete:
         <div>
           <h1 style={{
             margin: 0,
-            fontFamily: '"New York", "Iowan Old Style", Georgia, serif',
-            fontSize: 44, fontWeight: 500, fontStyle: "italic",
-            letterSpacing: "-0.02em", lineHeight: 1.05,
+            fontFamily: '-apple-system, "SF Pro Display", system-ui',
+            fontSize: 36, fontWeight: 800,
+            letterSpacing: "-0.028em", lineHeight: 1.05,
             color: "#1A1612",
           }}>
             {step === "key" ? "What's your Peec key?" : "Pick a project."}
           </h1>
           <p style={{
-            margin: "10px 0 0",
-            fontFamily: '"New York", Georgia, serif',
-            fontSize: 14, lineHeight: 1.55, color: "#8E8478",
+            margin: "8px 0 0",
+            fontSize: 14, lineHeight: 1.55, color: "#6B6259",
           }}>
             {step === "key"
               ? "Used to read your brands, citations, and projects from Peec. Stays in your browser."
@@ -167,12 +166,11 @@ export function Onboarding({ userId, onComplete }: { userId: string; onComplete:
             />
             <p style={{
               margin: "12px 0 0",
-              fontSize: 12, lineHeight: 1.5, color: "#8E8478",
-              fontFamily: '"New York", Georgia, serif', fontStyle: "italic",
+              fontSize: 12.5, lineHeight: 1.5, color: "#8E8478",
             }}>
               Find it at{" "}
               <a href="https://app.peec.ai/settings/api" target="_blank" rel="noreferrer"
-                 style={{ color: "#6E4FAE", textDecoration: "underline", textUnderlineOffset: 2 }}>
+                 style={{ color: "#6E4FAE", fontWeight: 600, textDecoration: "none", borderBottom: "1px solid rgba(110,79,174,0.3)" }}>
                 app.peec.ai → settings → API
               </a>.
             </p>
@@ -202,11 +200,8 @@ export function Onboarding({ userId, onComplete }: { userId: string; onComplete:
                 transition: "background 140ms",
               }}
             >
-              <span style={{
-                fontFamily: '"New York", Georgia, serif',
-                fontStyle: "italic", fontWeight: 500,
-              }}>Try the demo</span>
-              <span style={{ color: "#8E8478", fontWeight: 600, fontSize: 11.5 }}>· no key required</span>
+              <span style={{ fontWeight: 700, color: "#1A1612" }}>Try the demo</span>
+              <span style={{ color: "#8E8478", fontWeight: 500, fontSize: 11.5 }}>· no key required</span>
             </button>
           </div>
         ) : (
@@ -260,8 +255,7 @@ export function Onboarding({ userId, onComplete }: { userId: string; onComplete:
             background: "rgba(183,59,79,0.06)",
             border: "1px solid rgba(183,59,79,0.18)",
             color: "#B73B4F",
-            fontSize: 12.5, lineHeight: 1.45,
-            fontFamily: '"New York", Georgia, serif', fontStyle: "italic",
+            fontSize: 12.5, lineHeight: 1.45, fontWeight: 500,
           }}>{error}</div>
         )}
 
