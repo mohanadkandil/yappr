@@ -35,6 +35,24 @@ export function Onboarding({ userId, onComplete }: { userId: string; onComplete:
     } finally { setBusy(false); }
   };
 
+  const useDemo = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const r = await fetch("/api/onboarding/peec", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, action: "demo" }),
+      });
+      const d = await r.json();
+      if (!d.ok) { setError(d.error || "Demo data isn't configured."); return; }
+      const pid = d.project?.id ?? d.projectId;
+      const pname = d.project?.name ?? d.projectName ?? "Demo project";
+      if (!pid) { setError("Demo response missing project id."); return; }
+      onComplete(pid, pname);
+    } finally { setBusy(false); }
+  };
+
   const finish = async () => {
     if (!selectedId) return;
     setBusy(true);
@@ -158,6 +176,38 @@ export function Onboarding({ userId, onComplete }: { userId: string; onComplete:
                 app.peec.ai → settings → API
               </a>.
             </p>
+            <div style={{
+              marginTop: 22, display: "flex", alignItems: "center", gap: 10,
+            }}>
+              <span style={{ height: 1, flex: 1, background: "rgba(26,22,18,0.08)" }}/>
+              <span style={{
+                fontSize: 10, fontWeight: 700, letterSpacing: "0.22em",
+                textTransform: "uppercase", color: "#8E8478",
+              }}>or</span>
+              <span style={{ height: 1, flex: 1, background: "rgba(26,22,18,0.08)" }}/>
+            </div>
+            <button
+              onClick={useDemo}
+              disabled={busy}
+              style={{
+                marginTop: 16,
+                width: "100%",
+                padding: "11px 14px", borderRadius: 12,
+                background: "rgba(255,255,255,0.55)",
+                border: "1px solid rgba(26,22,18,0.1)",
+                color: "#1A1612",
+                fontSize: 13, fontWeight: 700,
+                cursor: busy ? "wait" : "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                transition: "background 140ms",
+              }}
+            >
+              <span style={{
+                fontFamily: '"New York", Georgia, serif',
+                fontStyle: "italic", fontWeight: 500,
+              }}>Try the demo</span>
+              <span style={{ color: "#8E8478", fontWeight: 600, fontSize: 11.5 }}>· no key required</span>
+            </button>
           </div>
         ) : (
           <div style={{
